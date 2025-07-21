@@ -1,3 +1,7 @@
+/// How two different [`crate::ContinuousRange`] instances relate to each other.
+///
+/// This is based on [Allen's interval algebra](https://en.wikipedia.org/wiki/Allen%27s_interval_algebra) for temporal
+/// intervals.
 #[derive(Clone, Copy, Hash, PartialEq, Eq, Debug)]
 pub enum RangesRelation {
     /// The first range is strictly before the second one with no overlap
@@ -16,7 +20,8 @@ pub enum RangesRelation {
     /// ```
     StrictlyAfter,
 
-    ///*
+    /// The first range is before the second one and both ranges have a single common point that ends the first one and
+    /// starts the second.
     /// ```text
     /// [ A ]
     ///     [ B ]
@@ -24,7 +29,8 @@ pub enum RangesRelation {
     ////
     Meets,
 
-    ///*
+    /// The first range is after the seocnd one and both ranges have a single common point that ends the second one and
+    /// starts the first.
     /// ```text
     ///     [ A ]
     /// [ B ]

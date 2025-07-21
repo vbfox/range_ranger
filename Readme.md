@@ -1,10 +1,11 @@
-# Range ranger &emsp; [![Build Status]][actions] [![Latest Version]][crates.io] ![msrv]
+# Range ranger &emsp; [![Build Status]][actions] [![Latest Version]][crates.io] [![msrv]][releases.rs]
 
 [Build Status]: https://img.shields.io/github/actions/workflow/status/vbfox/range_ranger/ci.yaml?branch=main
 [actions]: https://github.com/vbfox/range_ranger/actions?query=branch%3Amain
 [Latest Version]: https://img.shields.io/crates/v/range_ranger.svg
 [crates.io]: https://crates.io/crates/range_ranger
 [msrv]: https://img.shields.io/crates/msrv/range_ranger.svg?color=lightgray
+[releases.rs]: https://releases.rs/#rust-versions
 
 **This library is a WORK IN PROGRESS experiment into rust APIs for me**
 

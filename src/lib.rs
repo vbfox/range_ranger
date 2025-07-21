@@ -7,6 +7,7 @@
 mod continuous;
 mod range;
 mod relation;
+mod bounds;
 
 pub use continuous::ContinuousRange;
 pub use range::Range;
