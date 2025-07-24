@@ -1,3 +1,5 @@
+use std::cmp::Ordering;
+
 /// How two different [`crate::ContinuousRange`] instances relate to each other.
 ///
 /// This is based on [Allen's interval algebra](https://en.wikipedia.org/wiki/Allen%27s_interval_algebra) for temporal
@@ -169,6 +171,46 @@ impl RangesRelation {
             | RangesRelation::Starts
             | RangesRelation::IsStrictlyContained
             | RangesRelation::Finishes => false,
+        }
+    }
+
+    /// Get the relative ordering of the start bound of the ranges
+    #[must_use]
+    pub fn start_ordering(&self) -> Ordering {
+        match self {
+            RangesRelation::StrictlyBefore => Ordering::Less,
+            RangesRelation::StrictlyAfter => Ordering::Greater,
+            RangesRelation::Meets => Ordering::Less,
+            RangesRelation::IsMet => Ordering::Greater,
+            RangesRelation::Overlaps => Ordering::Less,
+            RangesRelation::IsOverlapped => Ordering::Greater,
+            RangesRelation::Starts => Ordering::Equal,
+            RangesRelation::IsStarted => Ordering::Equal,
+            RangesRelation::StrictlyContains => Ordering::Less,
+            RangesRelation::IsStrictlyContained => Ordering::Greater,
+            RangesRelation::Finishes => Ordering::Greater,
+            RangesRelation::IsFinished => Ordering::Less,
+            RangesRelation::Equal => Ordering::Equal,
+        }
+    }
+
+    /// Get the relative ordering of the end bound of the ranges
+    #[must_use]
+    pub fn end_ordering(&self) -> Ordering {
+        match self {
+            RangesRelation::StrictlyBefore => Ordering::Less,
+            RangesRelation::StrictlyAfter => Ordering::Greater,
+            RangesRelation::Meets => Ordering::Less,
+            RangesRelation::IsMet => Ordering::Greater,
+            RangesRelation::Overlaps => Ordering::Less,
+            RangesRelation::IsOverlapped => Ordering::Greater,
+            RangesRelation::Starts => Ordering::Less,
+            RangesRelation::IsStarted => Ordering::Greater,
+            RangesRelation::StrictlyContains => Ordering::Greater,
+            RangesRelation::IsStrictlyContained => Ordering::Less,
+            RangesRelation::Finishes => Ordering::Equal,
+            RangesRelation::IsFinished => Ordering::Equal,
+            RangesRelation::Equal => Ordering::Equal,
         }
     }
 }
