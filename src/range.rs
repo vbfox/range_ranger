@@ -21,7 +21,7 @@ impl<Idx> From<ContinuousRange<Idx>> for Range<Idx> {
     }
 }
 
-impl<Idx: PartialOrd + Clone> Range<Idx> {
+impl<Idx> Range<Idx> {
     /// A range containing no value
     ///
     /// `[]`
@@ -123,7 +123,7 @@ impl<Idx: PartialOrd + Clone> Range<Idx> {
     #[must_use]
     pub fn composite(items: impl IntoIterator<Item = Range<Idx>>) -> Range<Idx>
     where
-        Idx: PartialOrd,
+        Idx: PartialOrd + Clone,
     {
         let mut iter = items.into_iter();
 
@@ -184,7 +184,7 @@ impl<Idx: PartialOrd + Clone> Range<Idx> {
     #[must_use]
     pub fn union(&self, other: &Range<Idx>) -> Range<Idx>
     where
-        Idx: PartialOrd,
+        Idx: PartialOrd + Clone,
     {
         // TODO: Quite a few cases can be optimized, specialized, ...
         // TODO: Also maybe the ranges should be kept sorted in composite
@@ -221,7 +221,7 @@ impl<Idx: PartialOrd + Clone> Range<Idx> {
 
     pub fn simplify_mut(&mut self)
     where
-        Idx: PartialOrd,
+        Idx: PartialOrd + Clone,
     {
         match self {
             Self::Continuous(r) => r.simplify_mut(),
@@ -250,7 +250,10 @@ impl<Idx: PartialOrd + Clone> Range<Idx> {
     }
 
     #[must_use]
-    pub fn is_empty(&self) -> bool {
+    pub fn is_empty(&self) -> bool
+    where
+        Idx: PartialOrd,
+    {
         match self {
             Self::Continuous(r) => r.is_empty(),
             Self::Composite(v) => v.iter().all(ContinuousRange::is_empty),
@@ -279,7 +282,7 @@ impl<Idx: PartialOrd + Clone> Add<&Range<Idx>> for Range<Idx> {
     }
 }
 
-impl<Idx: PartialOrd + Clone> Sub<Range<Idx>> for Range<Idx> {
+impl<Idx> Sub<Range<Idx>> for Range<Idx> {
     type Output = Range<Idx>;
 
     fn sub(self, other: Range<Idx>) -> Range<Idx> {
@@ -287,38 +290,38 @@ impl<Idx: PartialOrd + Clone> Sub<Range<Idx>> for Range<Idx> {
     }
 }
 
-impl<Idx: PartialOrd + Clone> From<ops::RangeFull> for Range<Idx> {
+impl<Idx> From<ops::RangeFull> for Range<Idx> {
     fn from(_: ops::RangeFull) -> Self {
         Self::full()
     }
 }
 
-impl<Idx: PartialOrd + Clone> From<ops::Range<Idx>> for Range<Idx> {
+impl<Idx: PartialOrd> From<ops::Range<Idx>> for Range<Idx> {
     fn from(r: ops::Range<Idx>) -> Self {
         Self::continuous_end_exclusive(r.start, r.end)
     }
 }
 
-impl<Idx: PartialOrd + Clone> From<ops::RangeInclusive<Idx>> for Range<Idx> {
+impl<Idx: PartialOrd> From<ops::RangeInclusive<Idx>> for Range<Idx> {
     fn from(r: ops::RangeInclusive<Idx>) -> Self {
         let (start, end) = r.into_inner();
         Self::continuous(start, end)
     }
 }
 
-impl<Idx: PartialOrd + Clone> From<ops::RangeFrom<Idx>> for Range<Idx> {
+impl<Idx> From<ops::RangeFrom<Idx>> for Range<Idx> {
     fn from(r: ops::RangeFrom<Idx>) -> Self {
         Self::from(r.start)
     }
 }
 
-impl<Idx: PartialOrd + Clone> From<ops::RangeToInclusive<Idx>> for Range<Idx> {
+impl<Idx> From<ops::RangeToInclusive<Idx>> for Range<Idx> {
     fn from(r: ops::RangeToInclusive<Idx>) -> Self {
         Self::to(r.end)
     }
 }
 
-impl<Idx: PartialOrd + Clone> From<ops::RangeTo<Idx>> for Range<Idx> {
+impl<Idx> From<ops::RangeTo<Idx>> for Range<Idx> {
     fn from(r: ops::RangeTo<Idx>) -> Self {
         Self::to_exclusive(r.end)
     }

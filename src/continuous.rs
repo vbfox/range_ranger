@@ -2,10 +2,14 @@ use std::{
     borrow::Borrow,
     cmp::Ordering,
     fmt,
+    fmt::Debug,
     ops::{self, Bound},
 };
 
-use crate::{bounds::{expect_bound, partial_cmp_bounds, reverse_bound, BoundSide}, RangesRelation};
+use crate::{
+    bounds::{expect_bound, partial_cmp_bounds, reverse_bound, BoundSide},
+    RangesRelation,
+};
 
 /// A continuous range contain can be empty, contains all elements from a start and an end point of the generic
 /// parameter `Idx` or all possible values in `Idx` range.
@@ -67,7 +71,7 @@ pub enum ContinuousRange<Idx> {
     Full,
 }
 
-impl<Idx: PartialOrd + Clone> ContinuousRange<Idx> {
+impl<Idx> ContinuousRange<Idx> {
     /// A range containing no value
     ///
     /// `[]`
@@ -186,7 +190,10 @@ impl<Idx: PartialOrd + Clone> ContinuousRange<Idx> {
 
     /// Create a new range from the specified bounds
     #[must_use]
-    pub fn from_bounds(bounds: (Bound<&Idx>, Bound<&Idx>)) -> Self {
+    pub fn from_bounds(bounds: (Bound<&Idx>, Bound<&Idx>)) -> Self
+    where
+        Idx: PartialOrd + Clone,
+    {
         match bounds {
             (Bound::Unbounded, Bound::Unbounded) => Self::full(),
             (Bound::Included(start), Bound::Included(end)) => {
@@ -300,7 +307,7 @@ impl<Idx: PartialOrd + Clone> ContinuousRange<Idx> {
     #[must_use]
     pub fn contains_range(&self, other: &ContinuousRange<Idx>) -> bool
     where
-        Idx: std::fmt::Debug,
+        Idx: PartialOrd + Debug,
     {
         self.compare(other).map_or(false, |r| r.contains())
     }
@@ -308,7 +315,7 @@ impl<Idx: PartialOrd + Clone> ContinuousRange<Idx> {
     #[must_use]
     pub fn disjoint_from_range(&self, other: &ContinuousRange<Idx>) -> bool
     where
-        Idx: std::fmt::Debug,
+        Idx: PartialOrd + Debug,
     {
         self.compare(other).map_or(true, |r| r.disjoint())
     }
@@ -317,7 +324,7 @@ impl<Idx: PartialOrd + Clone> ContinuousRange<Idx> {
     #[allow(clippy::missing_panics_doc)]
     pub fn union(&self, other: &ContinuousRange<Idx>) -> Option<ContinuousRange<Idx>>
     where
-        Idx: PartialOrd + std::fmt::Debug,
+        Idx: PartialOrd + Clone + Debug,
     {
         match (self, other) {
             (ContinuousRange::Empty, r) | (r, ContinuousRange::Empty) => Some(r.clone()),
@@ -363,7 +370,7 @@ impl<Idx: PartialOrd + Clone> ContinuousRange<Idx> {
     #[allow(clippy::missing_panics_doc)]
     pub fn intersection(&self, other: &ContinuousRange<Idx>) -> ContinuousRange<Idx>
     where
-        Idx: PartialOrd + std::fmt::Debug,
+        Idx: PartialOrd + Clone + Debug,
     {
         match (self, other) {
             (ContinuousRange::Empty, _) | (_, ContinuousRange::Empty) => ContinuousRange::Empty,
@@ -412,7 +419,7 @@ impl<Idx: PartialOrd + Clone> ContinuousRange<Idx> {
     #[allow(clippy::missing_panics_doc)]
     pub fn difference(&self, other: &ContinuousRange<Idx>) -> Option<ContinuousRange<Idx>>
     where
-        Idx: PartialOrd + std::fmt::Debug,
+        Idx: PartialOrd + Clone + Debug,
     {
         match (self, other) {
             (ContinuousRange::Empty, r) => Some(r.clone()),
@@ -470,7 +477,7 @@ impl<Idx: PartialOrd + Clone> ContinuousRange<Idx> {
     #[must_use]
     pub fn intersects(&self, other: &ContinuousRange<Idx>) -> bool
     where
-        Idx: std::fmt::Debug,
+        Idx: PartialOrd + Debug,
     {
         // Two empty ranges are 'equal' but we don't want to return true for them
         if self.is_empty() && other.is_empty() {
@@ -492,7 +499,7 @@ impl<Idx: PartialOrd + Clone> ContinuousRange<Idx> {
     /// This function may panic if the [`PartialOrd`] contract isn't respected.
     pub fn compare(&self, other: &ContinuousRange<Idx>) -> Option<RangesRelation>
     where
-        Idx: std::fmt::Debug,
+        Idx: PartialOrd + Debug,
     {
         // Inspired by "Maintaining Knowledge about Temporal Intervals" by James F. Allen
         // Communications of the ACM - November 1983 - Volume 26 - Number 11
@@ -603,7 +610,7 @@ No ordering can be found between {self:?} and {other:?}",
 
     pub fn simplify_mut(&mut self)
     where
-        Idx: PartialOrd,
+        Idx: PartialOrd + Clone,
     {
         match self {
             ContinuousRange::Inclusive(start, end) => {
@@ -633,7 +640,7 @@ No ordering can be found between {self:?} and {other:?}",
     #[must_use]
     pub fn simplify(&self) -> Self
     where
-        Idx: PartialOrd,
+        Idx: PartialOrd + Clone,
     {
         let mut clone = (*self).clone();
         clone.simplify_mut();
@@ -641,7 +648,10 @@ No ordering can be found between {self:?} and {other:?}",
     }
 
     #[must_use]
-    pub fn is_empty(&self) -> bool {
+    pub fn is_empty(&self) -> bool
+    where
+        Idx: PartialOrd,
+    {
         match self {
             Self::Empty => true,
 
@@ -668,44 +678,44 @@ No ordering can be found between {self:?} and {other:?}",
     }
 }
 
-impl<Idx: PartialOrd + Clone> From<()> for ContinuousRange<Idx> {
+impl<Idx> From<()> for ContinuousRange<Idx> {
     fn from((): ()) -> Self {
         Self::empty()
     }
 }
 
-impl<Idx: PartialOrd + Clone> From<ops::RangeFull> for ContinuousRange<Idx> {
+impl<Idx> From<ops::RangeFull> for ContinuousRange<Idx> {
     fn from(_: ops::RangeFull) -> Self {
         Self::full()
     }
 }
 
-impl<Idx: PartialOrd + Clone> From<ops::Range<Idx>> for ContinuousRange<Idx> {
+impl<Idx: PartialOrd> From<ops::Range<Idx>> for ContinuousRange<Idx> {
     fn from(r: ops::Range<Idx>) -> Self {
         Self::end_exclusive(r.start, r.end)
     }
 }
 
-impl<Idx: PartialOrd + Clone> From<ops::RangeInclusive<Idx>> for ContinuousRange<Idx> {
+impl<Idx: PartialOrd> From<ops::RangeInclusive<Idx>> for ContinuousRange<Idx> {
     fn from(r: ops::RangeInclusive<Idx>) -> Self {
         let (start, end) = r.into_inner();
         Self::inclusive(start, end)
     }
 }
 
-impl<Idx: PartialOrd + Clone> From<ops::RangeFrom<Idx>> for ContinuousRange<Idx> {
+impl<Idx> From<ops::RangeFrom<Idx>> for ContinuousRange<Idx> {
     fn from(r: ops::RangeFrom<Idx>) -> Self {
         Self::from(r.start)
     }
 }
 
-impl<Idx: PartialOrd + Clone> From<ops::RangeToInclusive<Idx>> for ContinuousRange<Idx> {
+impl<Idx> From<ops::RangeToInclusive<Idx>> for ContinuousRange<Idx> {
     fn from(r: ops::RangeToInclusive<Idx>) -> Self {
         Self::to(r.end)
     }
 }
 
-impl<Idx: PartialOrd + Clone> From<ops::RangeTo<Idx>> for ContinuousRange<Idx> {
+impl<Idx> From<ops::RangeTo<Idx>> for ContinuousRange<Idx> {
     fn from(r: ops::RangeTo<Idx>) -> Self {
         Self::to_exclusive(r.end)
     }
