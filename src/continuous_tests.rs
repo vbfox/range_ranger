@@ -155,13 +155,13 @@ mod test_from_stdlib {
     #[test]
     pub fn end_exclusive() {
         let r: ContinuousRange<_> = (1..5).into();
-        assert_matches!(r, ContinuousRange::EndExclusive(1, 5));
+        assert_eq!(r, ContinuousRange::EndExclusive(1, 5));
     }
 
     #[test]
     pub fn end_exclusive_equal() {
         let r: ContinuousRange<_> = (1..1).into();
-        assert_matches!(r, ContinuousRange::Empty);
+        assert_eq!(r, ContinuousRange::Empty);
     }
 
     #[test]

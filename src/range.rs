@@ -2,11 +2,11 @@
 
 use std::{
     borrow::Borrow,
-    fmt,
+    fmt::{self, Debug},
     ops::{self, Add, Bound, Sub},
 };
 
-use crate::{ContinuousRange, RangesRelation};
+use crate::{simplify::simplify_ranges, ContinuousRange, RangesRelation};
 
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, Hash, PartialEq)]
@@ -123,7 +123,7 @@ impl<Idx> Range<Idx> {
     #[must_use]
     pub fn composite(items: impl IntoIterator<Item = Range<Idx>>) -> Range<Idx>
     where
-        Idx: PartialOrd + Clone,
+        Idx: PartialOrd + Clone + Debug,
     {
         let mut iter = items.into_iter();
 
@@ -184,7 +184,7 @@ impl<Idx> Range<Idx> {
     #[must_use]
     pub fn union(&self, other: &Range<Idx>) -> Range<Idx>
     where
-        Idx: PartialOrd + Clone,
+        Idx: PartialOrd + Clone + Debug,
     {
         // TODO: Quite a few cases can be optimized, specialized, ...
         // TODO: Also maybe the ranges should be kept sorted in composite
@@ -221,20 +221,12 @@ impl<Idx> Range<Idx> {
 
     pub fn simplify_mut(&mut self)
     where
-        Idx: PartialOrd + Clone,
+        Idx: PartialOrd + Clone + Debug,
     {
         match self {
-            Self::Continuous(r) => r.simplify_mut(),
+            Self::Continuous(r) => *r = r.clone().simplify(),
             Self::Composite(v) => {
-                // TODO: Handle much more cases
-                // - Empty ranges
-                // - Full ranges
-                // - Ranges with only one element
-                // - Merge overlapping ranges
-                // - ...
-                for item in &mut *v {
-                    item.simplify_mut();
-                }
+                simplify_ranges(v);
             }
         }
     }
@@ -242,7 +234,7 @@ impl<Idx> Range<Idx> {
     #[must_use]
     pub fn simplify(&self) -> Self
     where
-        Idx: PartialOrd + Clone,
+        Idx: PartialOrd + Clone + Debug,
     {
         let mut clone = (*self).clone();
         clone.simplify_mut();
@@ -263,7 +255,7 @@ impl<Idx> Range<Idx> {
     #[must_use]
     pub fn is_full(&self) -> bool
     where
-        Idx: PartialOrd + Clone,
+        Idx: PartialOrd + Clone + Debug,
     {
         // We simplify to handle case that are complex but represent the full
         // range when simplified like (-inf, 0]; [0, +Inf)
@@ -274,7 +266,7 @@ impl<Idx> Range<Idx> {
     }
 }
 
-impl<Idx: PartialOrd + Clone> Add<&Range<Idx>> for Range<Idx> {
+impl<Idx: PartialOrd + Clone + Debug> Add<&Range<Idx>> for Range<Idx> {
     type Output = Range<Idx>;
 
     fn add(self, other: &Range<Idx>) -> Range<Idx> {

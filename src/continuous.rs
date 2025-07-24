@@ -22,7 +22,7 @@ use crate::{
 ///
 /// For a version that can contains multiple segments with holes, see [`crate::Range`].
 #[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, Hash, PartialEq)]
+#[derive(Clone, Copy, Hash, PartialEq)]
 pub enum ContinuousRange<Idx> {
     /// A range containing no value
     ///
@@ -327,6 +327,50 @@ impl<Idx> ContinuousRange<Idx> {
         self.compare(other).map_or(true, |r| r.disjoint())
     }
 
+    /// Internal version of the [`ContinuousRange::union`] for case where the result of [`ContinuousRange::compare`] is
+    /// already known.
+    #[must_use]
+    pub(crate) fn union_knowing_cmp(
+        &self,
+        other: &ContinuousRange<Idx>,
+        cmp: RangesRelation,
+    ) -> Option<ContinuousRange<Idx>>
+    where
+        Idx: PartialOrd + Clone,
+    {
+        match cmp {
+            RangesRelation::StrictlyBefore => None,
+            RangesRelation::StrictlyAfter => None,
+            RangesRelation::Meets => {
+                let start = self.start().expect("Self meets without bounds");
+                let end = other.end().expect("Other meets without bounds");
+                Some(ContinuousRange::from_bounds((start, end)))
+            }
+            RangesRelation::IsMet => {
+                let end = self.end().expect("Self meets without bounds");
+                let start = other.start().expect("Other meets without bounds");
+                Some(ContinuousRange::from_bounds((start, end)))
+            }
+            RangesRelation::Overlaps => {
+                let start = self.start().expect("Self meets without bounds");
+                let end = other.end().expect("Other meets without bounds");
+                Some(ContinuousRange::from_bounds((start, end)))
+            }
+            RangesRelation::IsOverlapped => {
+                let end = self.end().expect("Self meets without bounds");
+                let start = other.start().expect("Other meets without bounds");
+                Some(ContinuousRange::from_bounds((start, end)))
+            }
+            RangesRelation::Starts => Some(other.clone()),
+            RangesRelation::IsStarted => Some(self.clone()),
+            RangesRelation::StrictlyContains => Some(self.clone()),
+            RangesRelation::IsStrictlyContained => Some(other.clone()),
+            RangesRelation::Finishes => Some(other.clone()),
+            RangesRelation::IsFinished => Some(self.clone()),
+            RangesRelation::Equal => Some(self.clone()),
+        }
+    }
+
     #[must_use]
     #[allow(clippy::missing_panics_doc)]
     pub fn union(&self, other: &ContinuousRange<Idx>) -> Option<ContinuousRange<Idx>>
@@ -337,37 +381,7 @@ impl<Idx> ContinuousRange<Idx> {
             (ContinuousRange::Empty, r) | (r, ContinuousRange::Empty) => Some(r.clone()),
             (ContinuousRange::Full, _) | (_, ContinuousRange::Full) => Some(ContinuousRange::Full),
             _ => match self.compare(other) {
-                Some(cmp) => match cmp {
-                    RangesRelation::StrictlyBefore => None,
-                    RangesRelation::StrictlyAfter => None,
-                    RangesRelation::Meets => {
-                        let start = self.start().expect("Self meets without bounds");
-                        let end = other.end().expect("Other meets without bounds");
-                        Some(ContinuousRange::from_bounds((start, end)))
-                    }
-                    RangesRelation::IsMet => {
-                        let end = self.end().expect("Self meets without bounds");
-                        let start = other.start().expect("Other meets without bounds");
-                        Some(ContinuousRange::from_bounds((start, end)))
-                    }
-                    RangesRelation::Overlaps => {
-                        let start = self.start().expect("Self meets without bounds");
-                        let end = other.end().expect("Other meets without bounds");
-                        Some(ContinuousRange::from_bounds((start, end)))
-                    }
-                    RangesRelation::IsOverlapped => {
-                        let end = self.end().expect("Self meets without bounds");
-                        let start = other.start().expect("Other meets without bounds");
-                        Some(ContinuousRange::from_bounds((start, end)))
-                    }
-                    RangesRelation::Starts => Some(other.clone()),
-                    RangesRelation::IsStarted => Some(self.clone()),
-                    RangesRelation::StrictlyContains => Some(self.clone()),
-                    RangesRelation::IsStrictlyContained => Some(other.clone()),
-                    RangesRelation::Finishes => Some(other.clone()),
-                    RangesRelation::IsFinished => Some(self.clone()),
-                    RangesRelation::Equal => Some(self.clone()),
-                },
+                Some(cmp) => self.union_knowing_cmp(other, cmp),
                 None => None,
             },
         }
@@ -615,43 +629,26 @@ No ordering can be found between {self:?} and {other:?}",
         );
     }
 
-    pub fn simplify_mut(&mut self)
+    #[must_use]
+    pub fn simplify(self) -> Self
     where
-        Idx: PartialOrd + Clone,
+        Idx: PartialOrd,
     {
         match self {
-            ContinuousRange::Inclusive(start, end) => {
-                if start == end {
-                    *self = ContinuousRange::Single(start.clone());
-                } else if start > end {
-                    *self = ContinuousRange::Empty;
-                }
+            ContinuousRange::Inclusive(start, end) if start == end => {
+                ContinuousRange::Single(start)
             }
+            ContinuousRange::Inclusive(start, end) if start > end => ContinuousRange::Empty,
             ContinuousRange::Exclusive(start, end)
             | ContinuousRange::StartExclusive(start, end)
-            | ContinuousRange::EndExclusive(start, end) => {
-                if start >= end {
-                    *self = ContinuousRange::Empty;
-                }
+            | ContinuousRange::EndExclusive(start, end)
+                if start >= end =>
+            {
+                ContinuousRange::Empty
             }
-            ContinuousRange::Empty
-            | ContinuousRange::Single(_)
-            | ContinuousRange::From(_)
-            | ContinuousRange::FromExclusive(_)
-            | ContinuousRange::To(_)
-            | ContinuousRange::ToExclusive(_)
-            | ContinuousRange::Full => {}
-        }
-    }
 
-    #[must_use]
-    pub fn simplify(&self) -> Self
-    where
-        Idx: PartialOrd + Clone,
-    {
-        let mut clone = (*self).clone();
-        clone.simplify_mut();
-        clone
+            _ => self,
+        }
     }
 
     #[must_use]
