@@ -11,9 +11,16 @@ use crate::{
     RangesRelation,
 };
 
-/// A continuous range contain can be empty, contains all elements from a start and an end point of the generic
-/// parameter `Idx` or all possible values in `Idx` range.
-/// But it can't have "holes" contrary to [`crate::Range`]
+/// A continuous (no "holes") range of values of type `Idx`.
+///
+/// Can:
+///  - Be empty
+///  - Contain a single value
+///  - Have a start and end point (Inclusive or exclusive)
+///  - Contain all values from/to a point (Inclusive or exclusive)
+///  - Be the full range of potential `Idx` values
+///
+/// For a version that can contains multiple segments with holes, see [`crate::Range`].
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, Hash, PartialEq)]
 pub enum ContinuousRange<Idx> {

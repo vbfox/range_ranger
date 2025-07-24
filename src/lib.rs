@@ -7,10 +7,13 @@
 mod bounds;
 mod continuous;
 mod range;
+mod range_builder;
 mod relation;
+mod simplify;
 
 pub use continuous::ContinuousRange;
 pub use range::Range;
+pub use range_builder::RangeBuilder;
 pub use relation::RangesRelation;
 
 #[cfg(test)]
