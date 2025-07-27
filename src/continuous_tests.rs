@@ -1436,71 +1436,71 @@ mod test_start_end {
     #[test]
     pub fn empty() {
         let r = ContinuousRange::<i32>::Empty;
-        assert_eq!(r.start(), None);
-        assert_eq!(r.end(), None);
+        assert_eq!(r.start_bound(), None);
+        assert_eq!(r.end_bound(), None);
     }
 
     #[test]
     pub fn single() {
         let r = ContinuousRange::Single(42);
-        assert_eq!(r.start(), Some(Bound::Included(&42)));
-        assert_eq!(r.end(), Some(Bound::Included(&42)));
+        assert_eq!(r.start_bound(), Some(Bound::Included(&42)));
+        assert_eq!(r.end_bound(), Some(Bound::Included(&42)));
     }
 
     #[test]
     pub fn inclusive() {
         let r = ContinuousRange::Inclusive(0, 42);
-        assert_eq!(r.start(), Some(Bound::Included(&0)));
-        assert_eq!(r.end(), Some(Bound::Included(&42)));
+        assert_eq!(r.start_bound(), Some(Bound::Included(&0)));
+        assert_eq!(r.end_bound(), Some(Bound::Included(&42)));
     }
 
     #[test]
     pub fn exclusive() {
         let r = ContinuousRange::Exclusive(0, 42);
-        assert_eq!(r.start(), Some(Bound::Excluded(&0)));
-        assert_eq!(r.end(), Some(Bound::Excluded(&42)));
+        assert_eq!(r.start_bound(), Some(Bound::Excluded(&0)));
+        assert_eq!(r.end_bound(), Some(Bound::Excluded(&42)));
     }
 
     #[test]
     pub fn start_exclusive() {
         let r = ContinuousRange::StartExclusive(0, 42);
-        assert_eq!(r.start(), Some(Bound::Excluded(&0)));
-        assert_eq!(r.end(), Some(Bound::Included(&42)));
+        assert_eq!(r.start_bound(), Some(Bound::Excluded(&0)));
+        assert_eq!(r.end_bound(), Some(Bound::Included(&42)));
     }
 
     #[test]
     pub fn end_exclusive() {
         let r = ContinuousRange::EndExclusive(0, 42);
-        assert_eq!(r.start(), Some(Bound::Included(&0)));
-        assert_eq!(r.end(), Some(Bound::Excluded(&42)));
+        assert_eq!(r.start_bound(), Some(Bound::Included(&0)));
+        assert_eq!(r.end_bound(), Some(Bound::Excluded(&42)));
     }
 
     #[test]
     pub fn from() {
         let r = ContinuousRange::From(42);
-        assert_eq!(r.start(), Some(Bound::Included(&42)));
-        assert_eq!(r.end(), Some(Bound::Unbounded));
+        assert_eq!(r.start_bound(), Some(Bound::Included(&42)));
+        assert_eq!(r.end_bound(), Some(Bound::Unbounded));
     }
 
     #[test]
     pub fn from_exclusive() {
         let r = ContinuousRange::FromExclusive(42);
-        assert_eq!(r.start(), Some(Bound::Excluded(&42)));
-        assert_eq!(r.end(), Some(Bound::Unbounded));
+        assert_eq!(r.start_bound(), Some(Bound::Excluded(&42)));
+        assert_eq!(r.end_bound(), Some(Bound::Unbounded));
     }
 
     #[test]
     pub fn to() {
         let r = ContinuousRange::To(42);
-        assert_eq!(r.start(), Some(Bound::Unbounded));
-        assert_eq!(r.end(), Some(Bound::Included(&42)));
+        assert_eq!(r.start_bound(), Some(Bound::Unbounded));
+        assert_eq!(r.end_bound(), Some(Bound::Included(&42)));
     }
 
     #[test]
     pub fn to_exclusive() {
         let r = ContinuousRange::ToExclusive(42);
-        assert_eq!(r.start(), Some(Bound::Unbounded));
-        assert_eq!(r.end(), Some(Bound::Excluded(&42)));
+        assert_eq!(r.start_bound(), Some(Bound::Unbounded));
+        assert_eq!(r.end_bound(), Some(Bound::Excluded(&42)));
     }
 }
 

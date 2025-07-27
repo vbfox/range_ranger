@@ -247,7 +247,7 @@ impl<Idx> ContinuousRange<Idx> {
         }
     }
 
-    /// Start index bound.
+    /// Start bound.
     ///
     /// Returns the start value as a [`Bound`] or [`None`] if empty.
     #[must_use]
@@ -261,49 +261,15 @@ impl<Idx> ContinuousRange<Idx> {
             Self::EndExclusive(start, _) => Some(Bound::Included(start)),
             Self::From(start) => Some(Bound::Included(start)),
             Self::FromExclusive(start) => Some(Bound::Excluded(start)),
-            Self::To(_) => Some(Bound::Unbounded),
-            Self::ToExclusive(_) => Some(Bound::Unbounded),
-            Self::Full => Some(Bound::Unbounded),
-        }
-    }
-
-    /// End index bound.
-    ///
-    /// Returns the end value as a [`Bound`] or [`None`] if empty.
-    #[must_use]
-    pub fn end_bound(&self) -> Option<Bound<&Idx>> {
-        match self {
-            Self::Empty => None,
-            Self::Single(value) => Some(Bound::Included(value)),
-            Self::Inclusive(_, end) => Some(Bound::Included(end)),
-            Self::Exclusive(_, end) => Some(Bound::Excluded(end)),
-            Self::StartExclusive(_, end) => Some(Bound::Included(end)),
-            Self::EndExclusive(_, end) => Some(Bound::Excluded(end)),
-            Self::From(_) => Some(Bound::Unbounded),
-            Self::FromExclusive(_) => Some(Bound::Unbounded),
-            Self::To(end) => Some(Bound::Included(end)),
-            Self::ToExclusive(end) => Some(Bound::Excluded(end)),
-            Self::Full => Some(Bound::Unbounded),
-        }
-    }
-
-    #[must_use]
-    pub fn start(&self) -> Option<Bound<&Idx>> {
-        match self {
-            Self::Empty => None,
-            Self::Single(value) => Some(Bound::Included(value)),
-            Self::Inclusive(start, _) => Some(Bound::Included(start)),
-            Self::Exclusive(start, _) => Some(Bound::Excluded(start)),
-            Self::StartExclusive(start, _) => Some(Bound::Excluded(start)),
-            Self::EndExclusive(start, _) => Some(Bound::Included(start)),
-            Self::From(start) => Some(Bound::Included(start)),
-            Self::FromExclusive(start) => Some(Bound::Excluded(start)),
             Self::To(_) | Self::ToExclusive(_) | Self::Full => Some(Bound::Unbounded),
         }
     }
 
+    /// End bound.
+    ///
+    /// Returns the end value as a [`Bound`] or [`None`] if empty.
     #[must_use]
-    pub fn end(&self) -> Option<Bound<&Idx>> {
+    pub fn end_bound(&self) -> Option<Bound<&Idx>> {
         match self {
             Self::Empty => None,
             Self::Single(value) => Some(Bound::Included(value)),
@@ -381,23 +347,23 @@ impl<Idx> ContinuousRange<Idx> {
             RangesRelation::StrictlyBefore => None,
             RangesRelation::StrictlyAfter => None,
             RangesRelation::Meets => {
-                let start = self.start().expect("Self meets without bounds");
-                let end = other.end().expect("Other meets without bounds");
+                let start = self.start_bound().expect("Self meets without bounds");
+                let end = other.end_bound().expect("Other meets without bounds");
                 Some(ContinuousRange::from_bounds((start, end)))
             }
             RangesRelation::IsMet => {
-                let end = self.end().expect("Self meets without bounds");
-                let start = other.start().expect("Other meets without bounds");
+                let end = self.end_bound().expect("Self meets without bounds");
+                let start = other.start_bound().expect("Other meets without bounds");
                 Some(ContinuousRange::from_bounds((start, end)))
             }
             RangesRelation::Overlaps => {
-                let start = self.start().expect("Self meets without bounds");
-                let end = other.end().expect("Other meets without bounds");
+                let start = self.start_bound().expect("Self meets without bounds");
+                let end = other.end_bound().expect("Other meets without bounds");
                 Some(ContinuousRange::from_bounds((start, end)))
             }
             RangesRelation::IsOverlapped => {
-                let end = self.end().expect("Self meets without bounds");
-                let start = other.start().expect("Other meets without bounds");
+                let end = self.end_bound().expect("Self meets without bounds");
+                let start = other.start_bound().expect("Other meets without bounds");
                 Some(ContinuousRange::from_bounds((start, end)))
             }
             RangesRelation::Starts => Some(other.clone()),
@@ -440,11 +406,11 @@ impl<Idx> ContinuousRange<Idx> {
                     RangesRelation::StrictlyBefore => ContinuousRange::Empty,
                     RangesRelation::StrictlyAfter => ContinuousRange::Empty,
                     RangesRelation::Meets => {
-                        let end = expect_bound(self.end(), "Self meets without end bound");
+                        let end = expect_bound(self.end_bound(), "Self meets without end bound");
                         ContinuousRange::single(end.clone())
                     }
                     RangesRelation::IsMet => {
-                        let start = expect_bound(self.start(), "Self is met without start bound");
+                        let start = expect_bound(self.start_bound(), "Self is met without start bound");
                         ContinuousRange::single(start.clone())
                     }
                     RangesRelation::Overlaps => {
@@ -503,28 +469,28 @@ impl<Idx> ContinuousRange<Idx> {
                         Some(ContinuousRange::from_bounds((start, end)))
                     }
                     RangesRelation::Overlaps => {
-                        let start = self.start().expect("Self overlaps without bounds");
-                        let end = other.start().expect("Other is overlapped without bounds");
+                        let start = self.start_bound().expect("Self overlaps without bounds");
+                        let end = other.start_bound().expect("Other is overlapped without bounds");
                         let end = reverse_bound(end);
                         Some(ContinuousRange::from_bounds((start, end)))
                     }
                     RangesRelation::IsOverlapped => {
-                        let end = self.end().expect("Self is overlapped without bounds");
-                        let start = other.end().expect("Other overlaps without bounds");
+                        let end = self.end_bound().expect("Self is overlapped without bounds");
+                        let start = other.end_bound().expect("Other overlaps without bounds");
                         let start = reverse_bound(start);
                         Some(ContinuousRange::from_bounds((start, end)))
                     }
                     RangesRelation::Starts => Some(ContinuousRange::Empty),
                     RangesRelation::IsStarted => {
-                        let end = self.end().expect("Self is overlapped without bounds");
-                        let start = other.end().expect("Other overlaps without bounds");
+                        let end = self.end_bound().expect("Self is overlapped without bounds");
+                        let start = other.end_bound().expect("Other overlaps without bounds");
                         let start = reverse_bound(start);
                         Some(ContinuousRange::from_bounds((start, end)))
                     }
                     RangesRelation::Finishes => Some(ContinuousRange::Empty),
                     RangesRelation::IsFinished => {
-                        let start = self.start().expect("Self overlaps without bounds");
-                        let end = other.start().expect("Other is overlapped without bounds");
+                        let start = self.start_bound().expect("Self overlaps without bounds");
+                        let end = other.start_bound().expect("Other is overlapped without bounds");
                         let end = reverse_bound(end);
                         Some(ContinuousRange::from_bounds((start, end)))
                     }
@@ -758,6 +724,69 @@ impl<Idx> From<ops::RangeTo<Idx>> for ContinuousRange<Idx> {
 }
 
 impl<Idx: fmt::Debug> fmt::Debug for ContinuousRange<Idx> {
+    fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ContinuousRange::Empty => write!(fmt, "[]")?,
+            ContinuousRange::Single(value) => value.fmt(fmt)?,
+            ContinuousRange::Full => write!(fmt, "(..)")?,
+            ContinuousRange::Inclusive(start, end) => {
+                write!(fmt, "[")?;
+                start.fmt(fmt)?;
+                write!(fmt, "..")?;
+                end.fmt(fmt)?;
+                write!(fmt, "]")?;
+            }
+            ContinuousRange::Exclusive(start, end) => {
+                write!(fmt, "(")?;
+                start.fmt(fmt)?;
+                write!(fmt, "..")?;
+                end.fmt(fmt)?;
+                write!(fmt, ")")?;
+            }
+            ContinuousRange::StartExclusive(start, end) => {
+                write!(fmt, "(")?;
+                start.fmt(fmt)?;
+                write!(fmt, "..")?;
+                end.fmt(fmt)?;
+                write!(fmt, "]")?;
+            }
+            ContinuousRange::EndExclusive(start, end) => {
+                write!(fmt, "[")?;
+                start.fmt(fmt)?;
+                write!(fmt, "..")?;
+                end.fmt(fmt)?;
+                write!(fmt, ")")?;
+            }
+            ContinuousRange::From(start) => {
+                write!(fmt, "[")?;
+                start.fmt(fmt)?;
+                write!(fmt, "..")?;
+                write!(fmt, ")")?;
+            }
+            ContinuousRange::FromExclusive(start) => {
+                write!(fmt, "(")?;
+                start.fmt(fmt)?;
+                write!(fmt, "..")?;
+                write!(fmt, ")")?;
+            }
+            ContinuousRange::To(end) => {
+                write!(fmt, "(")?;
+                write!(fmt, "..")?;
+                end.fmt(fmt)?;
+                write!(fmt, "]")?;
+            }
+            ContinuousRange::ToExclusive(end) => {
+                write!(fmt, "(")?;
+                write!(fmt, "..")?;
+                end.fmt(fmt)?;
+                write!(fmt, ")")?;
+            }
+        }
+        Ok(())
+    }
+}
+
+impl<Idx: fmt::Display> fmt::Display for ContinuousRange<Idx> {
     fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             ContinuousRange::Empty => write!(fmt, "[]")?,
