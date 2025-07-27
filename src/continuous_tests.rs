@@ -864,7 +864,9 @@ mod test_compare {
 
     macro_rules! compare {
         ($a:expr, $b:expr, $relation:expr) => {
-            assert_eq!($a.compare(&$b), $relation);
+            let a = $a;
+            let b = $b;
+            assert_eq!(a.compare(&b), $relation, "Comparing {:?} and {:?}", a, b);
         };
     }
 
@@ -937,12 +939,12 @@ mod test_compare {
         strictly_before!(ContinuousRange::Single(1), ContinuousRange::Single(5));
         strictly_before!(ContinuousRange::Inclusive(1, 4), ContinuousRange::Single(5));
         strictly_before!(
-            ContinuousRange::Single(1),
+            ContinuousRange::EndExclusive(0, 1),
             ContinuousRange::Exclusive(1, 10)
         );
         strictly_before!(
             ContinuousRange::EndExclusive(1, 5),
-            ContinuousRange::Single(5)
+            ContinuousRange::StartExclusive(5, 15)
         );
 
         strictly_before!(
@@ -957,32 +959,16 @@ mod test_compare {
             ContinuousRange::Exclusive(1, 5),
             ContinuousRange::Exclusive(5, 10)
         );
-        strictly_before!(
-            ContinuousRange::Exclusive(1, 5),
-            ContinuousRange::Inclusive(5, 10)
-        );
-        strictly_before!(
-            ContinuousRange::Inclusive(1, 5),
-            ContinuousRange::Exclusive(5, 10)
-        );
-        strictly_before!(
-            ContinuousRange::EndExclusive(1, 5),
-            ContinuousRange::Inclusive(5, 10)
-        );
-        strictly_before!(
-            ContinuousRange::Inclusive(1, 5),
-            ContinuousRange::StartExclusive(5, 10)
-        );
 
         strictly_before!(ContinuousRange::Inclusive(1, 5), ContinuousRange::From(6));
         strictly_before!(ContinuousRange::To(5), ContinuousRange::From(6));
         strictly_before!(ContinuousRange::To(5), ContinuousRange::Inclusive(6, 10));
         strictly_before!(
             ContinuousRange::EndExclusive(1, 6),
-            ContinuousRange::From(6)
+            ContinuousRange::FromExclusive(6)
         );
         strictly_before!(
-            ContinuousRange::To(5),
+            ContinuousRange::ToExclusive(5),
             ContinuousRange::StartExclusive(5, 10)
         );
     }
@@ -1081,6 +1067,10 @@ mod test_compare {
             ContinuousRange::Inclusive(5, 20)
         );
         overlaps!(
+            ContinuousRange::Inclusive(0, 10),
+            ContinuousRange::Inclusive(10, 20)
+        );
+        overlaps!(
             ContinuousRange::Exclusive(0, 10),
             ContinuousRange::Inclusive(5, 20)
         );
@@ -1124,15 +1114,47 @@ mod test_compare {
 
         meet!(
             ContinuousRange::Inclusive(0, 10),
-            ContinuousRange::Inclusive(10, 20)
+            ContinuousRange::Exclusive(10, 20)
         );
         meet!(
             ContinuousRange::Inclusive(0, 10),
+            ContinuousRange::StartExclusive(10, 20)
+        );
+        meet!(
+            ContinuousRange::EndExclusive(0, 10),
+            ContinuousRange::Inclusive(10, 20)
+        );
+        meet!(
+            ContinuousRange::EndExclusive(0, 10),
             ContinuousRange::EndExclusive(10, 20)
+        );
+
+        meet!(
+            ContinuousRange::To(10),
+            ContinuousRange::StartExclusive(10, 20)
+        );
+        meet!(ContinuousRange::To(10), ContinuousRange::Exclusive(10, 20));
+        meet!(
+            ContinuousRange::ToExclusive(10),
+            ContinuousRange::Inclusive(10, 20)
+        );
+        meet!(
+            ContinuousRange::ToExclusive(10),
+            ContinuousRange::EndExclusive(10, 20)
+        );
+
+        meet!(
+            ContinuousRange::EndExclusive(0, 10),
+            ContinuousRange::From(10)
+        );
+        meet!(ContinuousRange::Exclusive(0, 10), ContinuousRange::From(10));
+        meet!(
+            ContinuousRange::Inclusive(0, 10),
+            ContinuousRange::FromExclusive(10)
         );
         meet!(
             ContinuousRange::StartExclusive(0, 10),
-            ContinuousRange::Inclusive(10, 20)
+            ContinuousRange::FromExclusive(10)
         );
     }
 

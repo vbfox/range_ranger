@@ -1,13 +1,12 @@
 use std::{
     borrow::Borrow,
-    cmp::Ordering,
     fmt,
     fmt::Debug,
     ops::{self, Bound},
 };
 
 use crate::{
-    bounds::{expect_bound, partial_cmp_bounds, reverse_bound, BoundSide},
+    bounds::{expect_bound, partial_cmp_bounds, reverse_bound, BoundOrdering, BoundSide},
     RangesRelation,
 };
 
@@ -546,33 +545,22 @@ impl<Idx> ContinuousRange<Idx> {
         let cmp_end_start =
             partial_cmp_bounds(&self_end, BoundSide::End, &other_start, BoundSide::Start)?;
 
-        if cmp_end_start == Ordering::Less {
+        if cmp_end_start == BoundOrdering::Less {
             return Some(RangesRelation::StrictlyBefore);
+        }
+
+        if cmp_end_start == BoundOrdering::Meets {
+            return Some(RangesRelation::Meets);
         }
 
         let cmp_start_end =
             partial_cmp_bounds(&self_start, BoundSide::Start, &other_end, BoundSide::End)?;
 
-        if cmp_start_end == Ordering::Greater {
+        if cmp_start_end == BoundOrdering::Greater {
             return Some(RangesRelation::StrictlyAfter);
         }
 
-        let self_cmp =
-            partial_cmp_bounds(&self_start, BoundSide::Start, &self_end, BoundSide::End)?;
-
-        let other_cmp =
-            partial_cmp_bounds(&other_start, BoundSide::Start, &other_end, BoundSide::End)?;
-
-        if cmp_end_start == Ordering::Equal
-            && self_cmp != Ordering::Equal
-            && other_cmp != Ordering::Equal
-        {
-            return Some(RangesRelation::Meets);
-        }
-        if cmp_start_end == Ordering::Equal
-            && self_cmp != Ordering::Equal
-            && other_cmp != Ordering::Equal
-        {
+        if cmp_start_end == BoundOrdering::IsMet {
             return Some(RangesRelation::IsMet);
         }
 
@@ -586,46 +574,50 @@ impl<Idx> ContinuousRange<Idx> {
         let cmp_end_end =
             partial_cmp_bounds(&self_end, BoundSide::End, &other_end, BoundSide::End)?;
 
-        if cmp_start_start == Ordering::Less
-            && cmp_end_start == Ordering::Greater
-            && cmp_end_end == Ordering::Less
+        if cmp_start_start == BoundOrdering::Less
+            && (cmp_end_start == BoundOrdering::Greater || cmp_end_start == BoundOrdering::Equal)
+            && cmp_end_end == BoundOrdering::Less
         {
             return Some(RangesRelation::Overlaps);
         }
-        if cmp_start_start == Ordering::Greater
-            && cmp_start_end == Ordering::Less
-            && cmp_end_end == Ordering::Greater
+        if cmp_start_start == BoundOrdering::Greater
+            && (cmp_start_end == BoundOrdering::Less || cmp_start_end == BoundOrdering::Equal)
+            && cmp_end_end == BoundOrdering::Greater
         {
             return Some(RangesRelation::IsOverlapped);
         }
-        if cmp_start_start == Ordering::Equal && cmp_end_end == Ordering::Less {
+        if cmp_start_start == BoundOrdering::Equal && cmp_end_end == BoundOrdering::Less {
             return Some(RangesRelation::Starts);
         }
-        if cmp_start_start == Ordering::Equal && cmp_end_end == Ordering::Greater {
+        if cmp_start_start == BoundOrdering::Equal && cmp_end_end == BoundOrdering::Greater {
             return Some(RangesRelation::IsStarted);
         }
-        if cmp_start_start == Ordering::Greater && cmp_end_end == Ordering::Equal {
+        if cmp_start_start == BoundOrdering::Greater && cmp_end_end == BoundOrdering::Equal {
             return Some(RangesRelation::Finishes);
         }
-        if cmp_start_start == Ordering::Less && cmp_end_end == Ordering::Equal {
+        if cmp_start_start == BoundOrdering::Less && cmp_end_end == BoundOrdering::Equal {
             return Some(RangesRelation::IsFinished);
         }
-        if cmp_start_start == Ordering::Less && cmp_end_end == Ordering::Greater {
+        if cmp_start_start == BoundOrdering::Less && cmp_end_end == BoundOrdering::Greater {
             return Some(RangesRelation::StrictlyContains);
         }
-        if cmp_start_start == Ordering::Greater && cmp_end_end == Ordering::Less {
+        if cmp_start_start == BoundOrdering::Greater && cmp_end_end == BoundOrdering::Less {
             return Some(RangesRelation::IsStrictlyContained);
         }
-        if cmp_start_start == Ordering::Equal && cmp_end_end == Ordering::Equal {
+        if cmp_start_start == BoundOrdering::Equal && cmp_end_end == BoundOrdering::Equal {
             return Some(RangesRelation::Equal);
         }
 
         // Should be unreachable if PartialOrd contract is correctly implemented
         panic!(
             r"PartialOrd contract isn't correctly implemented.
-No ordering can be found between {self:?} and {other:?}",
-            self = &self,
-            other = &other
+No ordering can be found between {self:?} and {other:?}.
+
+self.end.partial_cmp(other.start)   = {cmp_end_start:?}
+self.start.partial_cmp(other.end)   = {cmp_start_end:?}
+self.start.partial_cmp(other.start) = {cmp_start_start:?}
+self.end.partial_cmp(other.end)     = {cmp_end_end:?}
+",
         );
     }
 

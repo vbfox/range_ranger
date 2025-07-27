@@ -186,22 +186,16 @@ mod tests {
             ContinuousRange::Empty,
             ContinuousRange::Empty,
         ]);
-        assert_eq!(
-            ranges,
-            vec![ContinuousRange::Single(0)]
-        );
+        assert_eq!(ranges, vec![ContinuousRange::Single(0)]);
     }
 
-        #[test]
+    #[test]
     pub fn proptest_repro_2() {
         let ranges = simplified_ranges::<i32>(vec![
             ContinuousRange::EndExclusive(0, 203),
             ContinuousRange::Single(203),
         ]);
-        assert_eq!(
-            ranges,
-            vec![ContinuousRange::Inclusive(0, 203)]
-        );
+        assert_eq!(ranges, vec![ContinuousRange::Inclusive(0, 203)]);
     }
 
     fn continuous_range_strategy() -> BoxedStrategy<ContinuousRange<u8>> {
@@ -276,7 +270,6 @@ mod tests {
             assert_all!(others.iter(), |other| !joinable(range, other));
 
             // 5. They are ordered
-
         }
         Ok(())
     }

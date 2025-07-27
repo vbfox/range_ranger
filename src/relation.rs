@@ -22,20 +22,30 @@ pub enum RangesRelation {
     /// ```
     StrictlyAfter,
 
-    /// The first range is before the second one and both ranges have a single common point that ends the first one and
-    /// starts the second.
+    /// The first range is before the second one and both ranges have a single common point that's included in one and
+    /// excluded in the other.
+    /// ```text
+    /// [ A )
+    ///     [ B ]
+    /// ```
+    /// or
     /// ```text
     /// [ A ]
-    ///     [ B ]
+    ///     ( B ]
     /// ```
     ////
     Meets,
 
-    /// The first range is after the seocnd one and both ranges have a single common point that ends the second one and
-    /// starts the first.
+    /// The first range is after the second one and both ranges have a single common point that's included in one and
+    /// excluded in the other.
+    /// ```text
+    ///     ( A ]
+    /// [ B ]
+    /// ```
+    /// or
     /// ```text
     ///     [ A ]
-    /// [ B ]
+    /// [ B )
     /// ```
     ////
     IsMet,
