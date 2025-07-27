@@ -219,26 +219,26 @@ impl<Idx> Range<Idx> {
         todo!()
     }
 
-    pub fn simplify_mut(&mut self)
+    #[must_use]
+    pub fn simplify(self) -> Self
     where
         Idx: PartialOrd + Clone + Debug,
     {
         match self {
-            Self::Continuous(r) => *r = r.clone().simplify(),
-            Self::Composite(v) => {
-                simplify_ranges(v);
+            Self::Continuous(r) => Self::Continuous(r.simplify()),
+            Self::Composite(mut v) => {
+                simplify_ranges(&mut v);
+
+                match v.len() {
+                    0 => Self::empty(),
+                    1 => {
+                        let v = v.into_iter().next().expect("Single element vector has a value");
+                        Self::Continuous(v)
+                    },
+                    _ => Self::Composite(v)
+                }
             }
         }
-    }
-
-    #[must_use]
-    pub fn simplify(&self) -> Self
-    where
-        Idx: PartialOrd + Clone + Debug,
-    {
-        let mut clone = (*self).clone();
-        clone.simplify_mut();
-        clone
     }
 
     #[must_use]
@@ -259,7 +259,7 @@ impl<Idx> Range<Idx> {
     {
         // We simplify to handle case that are complex but represent the full
         // range when simplified like (-inf, 0]; [0, +Inf)
-        match self.simplify() {
+        match self.clone().simplify() {
             Self::Continuous(r) => r.is_full(),
             Self::Composite(v) => v.iter().any(ContinuousRange::is_full),
         }
