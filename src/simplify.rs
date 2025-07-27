@@ -270,6 +270,14 @@ mod tests {
             assert_all!(others.iter(), |other| !joinable(range, other));
 
             // 5. They are ordered
+            if i > 0 {
+                let before = simplified_ranges[i - 1];
+                assert_eq!(range.compare(&before), Some(RangesRelation::StrictlyAfter));
+            }
+            if i < simplified_ranges.len() - 1 {
+                let after = simplified_ranges[i + 1];
+                assert_eq!(range.compare(&after), Some(RangesRelation::StrictlyBefore));
+            }
         }
         Ok(())
     }
