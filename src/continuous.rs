@@ -247,6 +247,46 @@ impl<Idx> ContinuousRange<Idx> {
         }
     }
 
+    /// Start index bound.
+    ///
+    /// Returns the start value as a [`Bound`] or [`None`] if empty.
+    #[must_use]
+    pub fn start_bound(&self) -> Option<Bound<&Idx>> {
+        match self {
+            Self::Empty => None,
+            Self::Single(value) => Some(Bound::Included(value)),
+            Self::Inclusive(start, _) => Some(Bound::Included(start)),
+            Self::Exclusive(start, _) => Some(Bound::Excluded(start)),
+            Self::StartExclusive(start, _) => Some(Bound::Excluded(start)),
+            Self::EndExclusive(start, _) => Some(Bound::Included(start)),
+            Self::From(start) => Some(Bound::Included(start)),
+            Self::FromExclusive(start) => Some(Bound::Excluded(start)),
+            Self::To(_) => Some(Bound::Unbounded),
+            Self::ToExclusive(_) => Some(Bound::Unbounded),
+            Self::Full => Some(Bound::Unbounded),
+        }
+    }
+
+    /// End index bound.
+    ///
+    /// Returns the end value as a [`Bound`] or [`None`] if empty.
+    #[must_use]
+    pub fn end_bound(&self) -> Option<Bound<&Idx>> {
+        match self {
+            Self::Empty => None,
+            Self::Single(value) => Some(Bound::Included(value)),
+            Self::Inclusive(_, end) => Some(Bound::Included(end)),
+            Self::Exclusive(_, end) => Some(Bound::Excluded(end)),
+            Self::StartExclusive(_, end) => Some(Bound::Included(end)),
+            Self::EndExclusive(_, end) => Some(Bound::Excluded(end)),
+            Self::From(_) => Some(Bound::Unbounded),
+            Self::FromExclusive(_) => Some(Bound::Unbounded),
+            Self::To(end) => Some(Bound::Included(end)),
+            Self::ToExclusive(end) => Some(Bound::Excluded(end)),
+            Self::Full => Some(Bound::Unbounded),
+        }
+    }
+
     #[must_use]
     pub fn start(&self) -> Option<Bound<&Idx>> {
         match self {
