@@ -4,11 +4,11 @@ use crate::{ContinuousRange, RangesRelation};
 
 /// Simplify a list of ranges, this operation produce mutate the input such that it satisfies the following:
 ///
-/// - All continuous ranges are simplified
-/// - Does not contain any empty ranges
-/// - None of the range overlaps
-/// - None of the ranges are joinable (The end of one is the start of the other, and they aren't both exclusive)
-/// - They are ordered
+/// 1. All continuous ranges are simplified
+/// 2. Does not contain any empty ranges
+/// 3. None of the range overlaps
+/// 4. None of the ranges meets (The end of one is the start of the other, and they aren't both exclusive)
+/// 5. They are ordered
 pub fn simplify_ranges<Idx>(ranges: &mut Vec<ContinuousRange<Idx>>)
 where
     Idx: PartialOrd + Clone + Debug,
@@ -115,6 +115,8 @@ mod tests {
     use assertables::assert_all;
     use proptest::prelude::*;
 
+    use crate::bounds::expect_bound;
+
     use super::*;
 
     fn simplified_ranges<Idx>(ranges: Vec<ContinuousRange<Idx>>) -> Vec<ContinuousRange<Idx>>
@@ -215,9 +217,9 @@ mod tests {
         .boxed()
     }
 
-    /// 2 ranges are joinable if they don't overlap but the inclusive end of one is the exclusive one of the other.
-    /// Or vice-versa.
-    fn joinable<T>(a: &ContinuousRange<T>, b: &ContinuousRange<T>) -> bool
+    /// 2 ranges meet if they are joinable, so if they don't overlap but the inclusive end of one is the exclusive
+    /// one of the other. Or vice-versa.
+    fn meets<T>(a: &ContinuousRange<T>, b: &ContinuousRange<T>) -> bool
     where
         T: Ord,
     {
@@ -266,16 +268,29 @@ mod tests {
                 .collect::<Vec<_>>();
             assert_all!(others.iter(), |other| !range.intersects(other));
 
-            // 4. None of the ranges are joinable
-            assert_all!(others.iter(), |other| !joinable(range, other));
+            // 4. None of the ranges meets
+            assert_all!(others.iter(), |other| !meets(range, other));
 
             // 5. They are ordered
             if i > 0 {
                 let before = simplified_ranges[i - 1];
+                let self_start = expect_bound(range.start_bound(), "No self start bound");
+                let before_end = expect_bound(before.end_bound(), "No other end bound");
+                assert!(
+                    before_end <= self_start,
+                    "{before:?}.end <= {range:?}.start"
+                );
+
+                // The check via compare ensure coherency and tests both the bound comparison and the "meets" condition
                 assert_eq!(range.compare(&before), Some(RangesRelation::StrictlyAfter));
             }
             if i < simplified_ranges.len() - 1 {
                 let after = simplified_ranges[i + 1];
+                let self_end = expect_bound(range.end_bound(), "No self end bound");
+                let after_start = expect_bound(after.start_bound(), "No other start bound");
+                assert!(self_end <= after_start, "{range:?}.end <= {after:?}.end");
+
+                // The check via compare ensure coherency and tests both the bound comparison and the "meets" condition
                 assert_eq!(range.compare(&after), Some(RangesRelation::StrictlyBefore));
             }
         }
