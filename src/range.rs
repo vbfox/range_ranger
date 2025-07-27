@@ -232,10 +232,13 @@ impl<Idx> Range<Idx> {
                 match v.len() {
                     0 => Self::empty(),
                     1 => {
-                        let v = v.into_iter().next().expect("Single element vector has a value");
+                        let v = v
+                            .into_iter()
+                            .next()
+                            .expect("Single element vector has a value");
                         Self::Continuous(v)
-                    },
-                    _ => Self::Composite(v)
+                    }
+                    _ => Self::Composite(v),
                 }
             }
         }

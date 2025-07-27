@@ -1714,3 +1714,83 @@ mod test_intersection {
         );
     }
 }
+
+mod proptests {
+    use proptest::prelude::*;
+
+    use crate::{strategies::{continuous_range_non_empty_strategy, continuous_range_strategy}, ContinuousRange};
+
+    fn expected_relations_impl(
+        a: ContinuousRange<u8>,
+        b: ContinuousRange<u8>,
+    ) -> Result<(), TestCaseError> {
+        Ok(())
+    }
+
+    proptest! {
+        #[test]
+        fn is_empty_is_full_exclusive(a in continuous_range_strategy::<u8>()) {
+            prop_assert_eq!(a.is_empty() && a.is_full(), false);
+        }
+
+        #[test]
+        fn union_empty(a in continuous_range_strategy::<u8>()) {
+            let actual = a.union(&ContinuousRange::Empty);
+            prop_assert_eq!(actual, Some(a));
+        }
+
+        #[test]
+        fn union_full(a in continuous_range_strategy::<u8>()) {
+            let actual = a.union(&ContinuousRange::Full);
+            prop_assert_eq!(actual, Some(ContinuousRange::Full));
+        }
+
+        #[test]
+        fn union_self(a in continuous_range_strategy::<u8>()) {
+            let actual = a.union(&a);
+            prop_assert_eq!(actual, Some(a));
+        }
+
+        #[test]
+        fn intersection_empty(a in continuous_range_strategy::<u8>()) {
+            let actual = a.intersection(&ContinuousRange::Empty);
+            prop_assert_eq!(actual, ContinuousRange::Empty);
+            prop_assert!(!a.intersects(&ContinuousRange::Empty));
+        }
+
+        #[test]
+        fn intersection_full(a in continuous_range_strategy::<u8>()) {
+            let actual = a.intersection(&ContinuousRange::Full);
+            prop_assert_eq!(actual, a);
+        }
+
+        #[test]
+        fn intersection_self(a in continuous_range_non_empty_strategy::<u8>()) {
+            let actual = a.intersection(&a);
+            prop_assert_eq!(actual, a);
+        }
+
+        #[test]
+        fn intersects_and_intersection(a in continuous_range_strategy::<u8>(), b in continuous_range_strategy::<u8>()) {
+            let intersects = a.intersects(&b);
+            let intersection = a.intersection(&b);
+            prop_assert_eq!(intersects, !intersection.is_empty());
+        }
+
+        #[test]
+        fn simplify_keep_relations(a in continuous_range_strategy::<u8>(), b in continuous_range_strategy::<u8>()) {
+            let a_simplified = a.clone().simplify();
+            prop_assert_eq!(a.intersection(&b), a_simplified.intersection(&b), "intersection");
+            prop_assert_eq!(a.union(&b), a_simplified.union(&b), "union");
+            prop_assert_eq!(a.compare(&b), a_simplified.compare(&b), "compare");
+            prop_assert_eq!(a.contains_range(&b), a_simplified.contains_range(&b), "contains_range");
+            prop_assert_eq!(a.disjoint_from_range(&b), a_simplified.disjoint_from_range(&b), "disjoint_from_range");
+            prop_assert_eq!(a.intersects(&b), a_simplified.intersects(&b), "intersects");
+        }
+
+        //#[test]
+        //fn expected_relations(a in continuous_range_strategy(), b in continuous_range_strategy()) {
+        //    expected_relations_impl(a, b)?;
+        //}
+    }
+}

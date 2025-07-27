@@ -382,13 +382,17 @@ impl<Idx> ContinuousRange<Idx> {
     where
         Idx: PartialOrd + Clone + Debug,
     {
-        match (self, other) {
-            (ContinuousRange::Empty, r) | (r, ContinuousRange::Empty) => Some(r.clone()),
-            (ContinuousRange::Full, _) | (_, ContinuousRange::Full) => Some(ContinuousRange::Full),
-            _ => match self.compare(other) {
+        if self.is_full() || other.is_full() {
+            Some(ContinuousRange::Full)
+        } else if self.is_empty() {
+            Some(other.clone())
+        } else if other.is_empty() {
+            Some(self.clone())
+        } else {
+            match self.compare(other) {
                 Some(cmp) => self.union_knowing_cmp(other, cmp),
                 None => None,
-            },
+            }
         }
     }
 
@@ -398,10 +402,15 @@ impl<Idx> ContinuousRange<Idx> {
     where
         Idx: PartialOrd + Clone + Debug,
     {
-        match (self, other) {
-            (ContinuousRange::Empty, _) | (_, ContinuousRange::Empty) => ContinuousRange::Empty,
-            (ContinuousRange::Full, r) | (r, ContinuousRange::Full) => r.clone(),
-            _ => match self.compare(other) {
+        if self.is_empty() || other.is_empty() {
+            ContinuousRange::Empty
+        } else if self.is_full() {
+            other.clone()
+        } else if other.is_full() {
+
+            self.clone()
+        } else {
+            match self.compare(other) {
                 Some(cmp) => match cmp {
                     RangesRelation::StrictlyBefore => ContinuousRange::Empty,
                     RangesRelation::StrictlyAfter => ContinuousRange::Empty,
@@ -410,7 +419,8 @@ impl<Idx> ContinuousRange<Idx> {
                         ContinuousRange::single(end.clone())
                     }
                     RangesRelation::IsMet => {
-                        let start = expect_bound(self.start_bound(), "Self is met without start bound");
+                        let start =
+                            expect_bound(self.start_bound(), "Self is met without start bound");
                         ContinuousRange::single(start.clone())
                     }
                     RangesRelation::Overlaps => {
@@ -437,7 +447,7 @@ impl<Idx> ContinuousRange<Idx> {
                     RangesRelation::Equal => self.clone(),
                 },
                 None => ContinuousRange::Empty,
-            },
+            }
         }
     }
 
@@ -470,7 +480,9 @@ impl<Idx> ContinuousRange<Idx> {
                     }
                     RangesRelation::Overlaps => {
                         let start = self.start_bound().expect("Self overlaps without bounds");
-                        let end = other.start_bound().expect("Other is overlapped without bounds");
+                        let end = other
+                            .start_bound()
+                            .expect("Other is overlapped without bounds");
                         let end = reverse_bound(end);
                         Some(ContinuousRange::from_bounds((start, end)))
                     }
@@ -490,7 +502,9 @@ impl<Idx> ContinuousRange<Idx> {
                     RangesRelation::Finishes => Some(ContinuousRange::Empty),
                     RangesRelation::IsFinished => {
                         let start = self.start_bound().expect("Self overlaps without bounds");
-                        let end = other.start_bound().expect("Other is overlapped without bounds");
+                        let end = other
+                            .start_bound()
+                            .expect("Other is overlapped without bounds");
                         let end = reverse_bound(end);
                         Some(ContinuousRange::from_bounds((start, end)))
                     }

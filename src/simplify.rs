@@ -115,7 +115,7 @@ mod tests {
     use assertables::assert_all;
     use proptest::prelude::*;
 
-    use crate::bounds::expect_bound;
+    use crate::{bounds::expect_bound, strategies::continuous_range_strategy};
 
     use super::*;
 
@@ -200,23 +200,6 @@ mod tests {
         assert_eq!(ranges, vec![ContinuousRange::Inclusive(0, 203)]);
     }
 
-    fn continuous_range_strategy() -> BoxedStrategy<ContinuousRange<u8>> {
-        prop_oneof![
-            Just(ContinuousRange::Empty),
-            Just(ContinuousRange::Full),
-            any::<u8>().prop_map(|v| ContinuousRange::Single(v)),
-            any::<u8>().prop_map(|v| ContinuousRange::From(v)),
-            any::<u8>().prop_map(|v| ContinuousRange::FromExclusive(v)),
-            any::<u8>().prop_map(|v| ContinuousRange::To(v)),
-            any::<u8>().prop_map(|v| ContinuousRange::ToExclusive(v)),
-            (any::<u8>(), any::<u8>()).prop_map(|(s, e)| ContinuousRange::Inclusive(s, e)),
-            (any::<u8>(), any::<u8>()).prop_map(|(s, e)| ContinuousRange::Exclusive(s, e)),
-            (any::<u8>(), any::<u8>()).prop_map(|(s, e)| ContinuousRange::StartExclusive(s, e)),
-            (any::<u8>(), any::<u8>()).prop_map(|(s, e)| ContinuousRange::EndExclusive(s, e)),
-        ]
-        .boxed()
-    }
-
     /// 2 ranges meet if they are joinable, so if they don't overlap but the inclusive end of one is the exclusive
     /// one of the other. Or vice-versa.
     fn meets<T>(a: &ContinuousRange<T>, b: &ContinuousRange<T>) -> bool
@@ -248,16 +231,18 @@ mod tests {
         }
     }
 
-    fn verify_simplify(ranges: Vec<ContinuousRange<u8>>) -> Result<(), TestCaseError> {
+    fn simplify_ranges_proptest_impl(
+        ranges: Vec<ContinuousRange<u8>>,
+    ) -> Result<(), TestCaseError> {
         let mut simplified_ranges = ranges.clone();
         simplify_ranges(&mut simplified_ranges);
         for (i, range) in simplified_ranges.iter().enumerate() {
             // 1. All continuous ranges are simplified
             let simplified = range.clone().simplify();
-            assert_eq!(&simplified, range);
+            prop_assert_eq!(&simplified, range);
 
             // 2. Does not contain any empty ranges
-            assert!(!range.is_empty());
+            prop_assert!(!range.is_empty());
 
             // 3. None of the range overlaps
             let others = simplified_ranges
@@ -276,22 +261,22 @@ mod tests {
                 let before = simplified_ranges[i - 1];
                 let self_start = expect_bound(range.start_bound(), "No self start bound");
                 let before_end = expect_bound(before.end_bound(), "No other end bound");
-                assert!(
+                prop_assert!(
                     before_end <= self_start,
                     "{before:?}.end <= {range:?}.start"
                 );
 
                 // The check via compare ensure coherency and tests both the bound comparison and the "meets" condition
-                assert_eq!(range.compare(&before), Some(RangesRelation::StrictlyAfter));
+                prop_assert_eq!(range.compare(&before), Some(RangesRelation::StrictlyAfter));
             }
             if i < simplified_ranges.len() - 1 {
                 let after = simplified_ranges[i + 1];
                 let self_end = expect_bound(range.end_bound(), "No self end bound");
                 let after_start = expect_bound(after.start_bound(), "No other start bound");
-                assert!(self_end <= after_start, "{range:?}.end <= {after:?}.end");
+                prop_assert!(self_end <= after_start, "{range:?}.end <= {after:?}.end");
 
                 // The check via compare ensure coherency and tests both the bound comparison and the "meets" condition
-                assert_eq!(range.compare(&after), Some(RangesRelation::StrictlyBefore));
+                prop_assert_eq!(range.compare(&after), Some(RangesRelation::StrictlyBefore));
             }
         }
         Ok(())
@@ -304,7 +289,7 @@ mod tests {
 
         #[test]
         fn simplify_ranges_proptest(ranges in prop::collection::vec(continuous_range_strategy(), 0..20)) {
-            verify_simplify(ranges)?;
+            simplify_ranges_proptest_impl(ranges)?;
         }
     }
 }

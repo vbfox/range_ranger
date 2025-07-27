@@ -21,3 +21,6 @@ mod tests;
 
 #[cfg(test)]
 mod continuous_tests;
+
+#[cfg(test)]
+mod strategies;
