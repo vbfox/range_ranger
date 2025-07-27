@@ -20,6 +20,7 @@ where
     // 1. Simplify continuous ranges
     let mut index_to_remove = Vec::<usize>::new();
 
+    println!("Ranges: {ranges:?}");
     for i in 0..ranges.len() {
         // Take the range to simplify it (Can't do it in place as it would require something like
         // std::mem::replace_with but it was considered unsound)
@@ -48,7 +49,8 @@ where
     }
 
     // 2. Remove empty ranges
-    for index in &index_to_remove {
+    println!("To remove: {index_to_remove:?}");
+    for index in index_to_remove.iter().rev() {
         ranges.swap_remove(*index);
     }
 
@@ -108,6 +110,11 @@ where
 
 #[cfg(test)]
 mod tests {
+    use std::ops::Bound;
+
+    use assertables::assert_all;
+    use proptest::prelude::*;
+
     use super::*;
 
     fn simplified_ranges<Idx>(ranges: Vec<ContinuousRange<Idx>>) -> Vec<ContinuousRange<Idx>>
@@ -169,5 +176,119 @@ mod tests {
             ranges,
             vec![ContinuousRange::To(100), ContinuousRange::Single(200),]
         );
+    }
+
+    #[test]
+    pub fn proptest_repro_1() {
+        let ranges = simplified_ranges::<i32>(vec![
+            ContinuousRange::Single(0),
+            ContinuousRange::Single(0),
+            ContinuousRange::Empty,
+            ContinuousRange::Empty,
+        ]);
+        assert_eq!(
+            ranges,
+            vec![ContinuousRange::Single(0)]
+        );
+    }
+
+        #[test]
+    pub fn proptest_repro_2() {
+        let ranges = simplified_ranges::<i32>(vec![
+            ContinuousRange::EndExclusive(0, 203),
+            ContinuousRange::Single(203),
+        ]);
+        assert_eq!(
+            ranges,
+            vec![ContinuousRange::Inclusive(0, 203)]
+        );
+    }
+
+    fn continuous_range_strategy() -> BoxedStrategy<ContinuousRange<u8>> {
+        prop_oneof![
+            Just(ContinuousRange::Empty),
+            Just(ContinuousRange::Full),
+            any::<u8>().prop_map(|v| ContinuousRange::Single(v)),
+            any::<u8>().prop_map(|v| ContinuousRange::From(v)),
+            any::<u8>().prop_map(|v| ContinuousRange::FromExclusive(v)),
+            any::<u8>().prop_map(|v| ContinuousRange::To(v)),
+            any::<u8>().prop_map(|v| ContinuousRange::ToExclusive(v)),
+            (any::<u8>(), any::<u8>()).prop_map(|(s, e)| ContinuousRange::Inclusive(s, e)),
+            (any::<u8>(), any::<u8>()).prop_map(|(s, e)| ContinuousRange::Exclusive(s, e)),
+            (any::<u8>(), any::<u8>()).prop_map(|(s, e)| ContinuousRange::StartExclusive(s, e)),
+            (any::<u8>(), any::<u8>()).prop_map(|(s, e)| ContinuousRange::EndExclusive(s, e)),
+        ]
+        .boxed()
+    }
+
+    /// 2 ranges are joinable if they don't overlap but the inclusive end of one is the exclusive one of the other.
+    /// Or vice-versa.
+    fn joinable<T>(a: &ContinuousRange<T>, b: &ContinuousRange<T>) -> bool
+    where
+        T: Ord,
+    {
+        let a_bounds = a.range_bounds();
+        let b_bounds = b.range_bounds();
+
+        match (a_bounds, b_bounds) {
+            (Some(a_bounds), Some(b_bounds)) => {
+                match (a_bounds.0, a_bounds.1, b_bounds.0, b_bounds.1) {
+                    (_, Bound::Included(a_end), Bound::Excluded(b_start), _)
+                    | (_, Bound::Excluded(a_end), Bound::Included(b_start), _)
+                        if a_end == b_start =>
+                    {
+                        true
+                    }
+                    (Bound::Included(a_start), _, _, Bound::Excluded(b_end))
+                    | (Bound::Excluded(a_start), _, _, Bound::Included(b_end))
+                        if a_start == b_end =>
+                    {
+                        true
+                    }
+                    _ => false,
+                }
+            }
+            _ => false,
+        }
+    }
+
+    fn verify_simplify(ranges: Vec<ContinuousRange<u8>>) -> Result<(), TestCaseError> {
+        let mut simplified_ranges = ranges.clone();
+        simplify_ranges(&mut simplified_ranges);
+        for (i, range) in simplified_ranges.iter().enumerate() {
+            // 1. All continuous ranges are simplified
+            let simplified = range.clone().simplify();
+            assert_eq!(&simplified, range);
+
+            // 2. Does not contain any empty ranges
+            assert!(!range.is_empty());
+
+            // 3. None of the range overlaps
+            let others = simplified_ranges
+                .iter()
+                .enumerate()
+                .filter(|(j, _)| i != *j)
+                .map(|(_, v)| v.clone())
+                .collect::<Vec<_>>();
+            assert_all!(others.iter(), |other| !range.intersects(other));
+
+            // 4. None of the ranges are joinable
+            assert_all!(others.iter(), |other| !joinable(range, other));
+
+            // 5. They are ordered
+
+        }
+        Ok(())
+    }
+
+    proptest! {
+        #![proptest_config(ProptestConfig {
+            cases: 1000, .. ProptestConfig::default()
+        })]
+
+        #[test]
+        fn simplify_ranges_proptest(ranges in prop::collection::vec(continuous_range_strategy(), 0..20)) {
+            verify_simplify(ranges)?;
+        }
     }
 }

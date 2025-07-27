@@ -15,6 +15,7 @@ categories = ["algorithms", "data-structures"]
 [dependencies]
 
 [dev-dependencies]
+assertables = "9.8.1"
 assert_matches = "1.5"
 chrono = "0.4"
 proptest = "1.0.0"
