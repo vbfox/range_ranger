@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Bump MSRV to rust 1.71
+
 ## [0.1.2](https://github.com/vbfox/ranger.rs/compare/v0.1.1...v0.1.2) - 2025-07-03
 
 ### Other
