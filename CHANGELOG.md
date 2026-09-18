@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.4](https://github.com/vbfox/range_ranger/compare/v0.1.3...v0.1.4) - 2026-09-18
+
+### Other
+
+- Use trusted publishing
+- Restore LF line endings in ci.yaml
+- Make the CI matrix actually use the matrix toolchain
+- Drop the daily CI schedule
+- Apply rustfmt
+- Update Rust toolchain to 1.98.1 and all dependencies
+- Pin GitHub Actions to commit SHAs
+
 ## [0.1.3](https://github.com/vbfox/range_ranger/compare/v0.1.2...v0.1.3) - 2026-06-22
 
 ### Other
