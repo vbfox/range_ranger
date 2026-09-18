@@ -597,8 +597,8 @@ impl<Idx: PartialOrd + Clone> ContinuousRange<Idx> {
         panic!(
             r"PartialOrd contract isn't correctly implemented.
 No ordering can be found between {self:?} and {other:?}",
-            self = &self,
-            other = &other
+            self = self,
+            other = other
         );
     }
 
