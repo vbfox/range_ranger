@@ -12,6 +12,9 @@ jobs:
   test:
     name: Rust ${{matrix.rust}}
     runs-on: ubuntu-latest
+    env:
+      # Override rust-toolchain.toml so each matrix entry really uses its own toolchain
+      RUSTUP_TOOLCHAIN: ${{matrix.rust}}
     strategy:
       fail-fast: false
       matrix:
