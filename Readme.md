@@ -1,10 +1,19 @@
-# Range ranger &emsp; [![Build Status]][actions] [![Latest Version]][crates.io] [![msrv]][releases.rs]
+# Range ranger
 
-[Build Status]: https://img.shields.io/github/actions/workflow/status/vbfox/range_ranger/ci.yaml?branch=main
-[actions]: https://github.com/vbfox/range_ranger/actions?query=branch%3Amain
-[Latest Version]: https://img.shields.io/crates/v/range_ranger.svg
-[crates.io]: https://crates.io/crates/range_ranger
-[msrv]: https://img.shields.io/crates/msrv/range_ranger.svg?color=lightgray
+[![License][license-badge]](LICENSE)
+[![crates.io][crate-badge]][crate]
+[![Docs][docs-badge]][docs]
+[![GitHub Actions Status][actions-badge]][actions]
+[![msrv]][releases.rs]
+
+[license-badge]: https://img.shields.io/badge/License-MIT-green.svg?longCache=true
+[crate-badge]: https://img.shields.io/crates/v/range_ranger.svg
+[crate]: https://crates.io/crates/range_ranger
+[docs-badge]: https://docs.rs/range_ranger/badge.svg
+[docs]: https://docs.rs/range_ranger
+[actions-badge]: https://github.com/vbfox/range_ranger/actions/workflows/ci.yaml/badge.svg?branch=main
+[actions]: https://github.com/vbfox/range_ranger/actions/workflows/ci.yaml?query=branch%3Amain
+[msrv]: https://img.shields.io/crates/msrv/range_ranger.svg
 [releases.rs]: https://releases.rs/#rust-versions
 
 **This library is a WORK IN PROGRESS experiment into rust APIs for me**
