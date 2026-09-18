@@ -5,13 +5,16 @@ use std::{
     ops::{self, Bound},
 };
 
-use crate::{bounds::{expect_bound, partial_cmp_bounds, reverse_bound, BoundSide}, RangesRelation};
+use crate::{
+    bounds::{expect_bound, partial_cmp_bounds, reverse_bound, BoundSide},
+    RangesRelation,
+};
 
 /// A continuous range contain can be empty, contains all elements from a start and an end point of the generic
 /// parameter `Idx` or all possible values in `Idx` range.
 /// But it can't have "holes" contrary to [`crate::Range`]
 #[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, Hash, PartialEq,Default)]
+#[derive(Clone, Hash, PartialEq, Default)]
 pub enum ContinuousRange<Idx> {
     /// A range containing no value
     ///
@@ -303,7 +306,7 @@ impl<Idx: PartialOrd + Clone> ContinuousRange<Idx> {
     where
         Idx: std::fmt::Debug,
     {
-        self.compare(other).is_some_and( |r| r.contains())
+        self.compare(other).is_some_and(|r| r.contains())
     }
 
     #[must_use]
