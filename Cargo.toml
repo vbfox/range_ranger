@@ -1,6 +1,6 @@
 [package]
 name = "range_ranger"
-version = "0.1.4"
+version = "0.1.5"
 authors = ["Julien Roncaglia <julien@roncaglia.fr>"]
 edition = "2018"
 rust-version = "1.71"

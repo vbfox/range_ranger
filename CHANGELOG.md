@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.5](https://github.com/vbfox/range_ranger/compare/v0.1.4...v0.1.5) - 2026-10-29
+
+### Other
+
+- Pin dtolnay/rust-toolchain to master with explicit inputs
+- Bump release-plz/action from 0.5.138 to 0.5.145
+- Better badges in readme
+
 ## [0.1.4](https://github.com/vbfox/range_ranger/compare/v0.1.3...v0.1.4) - 2026-09-18
 
 ### Other
